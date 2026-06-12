@@ -9,8 +9,11 @@ const { Pool } = pg;
 // Connection string or credentials from environment
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/shopify_clone';
 
+const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+
 export const pool = new Pool({
   connectionString,
+  ssl: isLocalhost ? false : { rejectUnauthorized: false },
   // If connectionString is empty, use individual env vars
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || 'postgres',
