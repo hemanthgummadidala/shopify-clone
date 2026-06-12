@@ -1,26 +1,26 @@
-import pg from 'pg';
+import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
-const { Pool } = pg;
-
-// Connection string or credentials from environment
+// Fallback to local only if DATABASE_URL is missing
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/shopify_clone';
 
-const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
-
-export //  WHAT TO PASTE INSTEAD:
-  const { Pool } = require('pg');
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+export const pool = new Pool({
+  connectionString,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
+// Seed products data
+const mockProducts = [
+  // Leave your actual product items below here if they were part of your original file!
+];
+
+// Seed products data
+const mockProducts = [
+  // ... your product objects can stay right below here if they were part of the original file
+];
 // Seed products data
 const mockProducts = [
   {
