@@ -5,13 +5,17 @@ const isProduction = import.meta.env.PROD;
 
 // Initialize GA4 if ID is valid and not the placeholder
 export const initGA = () => {
-  if (GA_ID && GA_ID !== 'G-XXXXXXXXXX') {
-    ReactGA.initialize(GA_ID, {
-      testMode: !isProduction, // In non-production, dry-run or mock mode is enabled via testMode
-    });
-    console.log(`[Google Analytics 4] Initialized with ID: ${GA_ID} (Production: ${isProduction})`);
-  } else {
-    console.log('[Google Analytics 4] Running in dry-run/mock mode (missing or placeholder ID)');
+  try {
+    if (GA_ID && GA_ID !== 'G-XXXXXXXXXX') {
+      ReactGA.initialize(GA_ID, {
+        testMode: !isProduction, // In non-production, dry-run or mock mode is enabled via testMode
+      });
+      console.log(`[Google Analytics 4] Initialized with ID: ${GA_ID} (Production: ${isProduction})`);
+    } else {
+      console.log('[Google Analytics 4] Running in dry-run/mock mode (missing or placeholder ID)');
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to initialize Google Analytics:', error);
   }
 };
 
@@ -25,12 +29,16 @@ const isGAActive = () => GA_ID && GA_ID !== 'G-XXXXXXXXXX';
  */
 export const trackPageView = (path: string, title?: string) => {
   const cleanPath = path.split('?')[0]; // Standardize page views to the clean pathname
-  if (isGAActive()) {
-    ReactGA.send({
-      hitType: 'pageview',
-      page: path,
-      title: title || cleanPath
-    });
+  try {
+    if (isGAActive()) {
+      ReactGA.send({
+        hitType: 'pageview',
+        page: path,
+        title: title || cleanPath
+      });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send page view:', error);
   }
   console.log(`[GA4 Event] page_view: ${path} (Title: ${title || cleanPath})`);
 };
@@ -40,8 +48,12 @@ export const trackPageView = (path: string, title?: string) => {
  * @param method The login method used (e.g., 'email', 'google').
  */
 export const trackLogin = (method: string = 'email') => {
-  if (isGAActive()) {
-    ReactGA.event('login', { method });
+  try {
+    if (isGAActive()) {
+      ReactGA.event('login', { method });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send login event:', error);
   }
   console.log(`[GA4 Event] login: method=${method}`);
 };
@@ -51,8 +63,12 @@ export const trackLogin = (method: string = 'email') => {
  * @param method The signup method used (e.g., 'email').
  */
 export const trackSignUp = (method: string = 'email') => {
-  if (isGAActive()) {
-    ReactGA.event('sign_up', { method });
+  try {
+    if (isGAActive()) {
+      ReactGA.event('sign_up', { method });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send sign up event:', error);
   }
   console.log(`[GA4 Event] sign_up: method=${method}`);
 };
@@ -62,8 +78,12 @@ export const trackSignUp = (method: string = 'email') => {
  * @param searchTerm The query terms searched by the user.
  */
 export const trackSearch = (searchTerm: string) => {
-  if (isGAActive()) {
-    ReactGA.event('search', { search_term: searchTerm });
+  try {
+    if (isGAActive()) {
+      ReactGA.event('search', { search_term: searchTerm });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send search event:', error);
   }
   console.log(`[GA4 Event] search: search_term=${searchTerm}`);
 };
@@ -90,12 +110,16 @@ export const trackViewItem = (product: { id: number; title: string; price: numbe
     item_category: product.category
   }];
 
-  if (isGAActive()) {
-    ReactGA.event('view_item', {
-      currency: 'INR',
-      value: product.price,
-      items
-    });
+  try {
+    if (isGAActive()) {
+      ReactGA.event('view_item', {
+        currency: 'INR',
+        value: product.price,
+        items
+      });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send view item event:', error);
   }
   console.log('[GA4 Event] view_item:', { currency: 'INR', value: product.price, items });
 };
@@ -116,12 +140,16 @@ export const trackAddToCart = (product: { id: number; title: string; price: numb
 
   const totalValue = product.price * quantity;
 
-  if (isGAActive()) {
-    ReactGA.event('add_to_cart', {
-      currency: 'INR',
-      value: totalValue,
-      items
-    });
+  try {
+    if (isGAActive()) {
+      ReactGA.event('add_to_cart', {
+        currency: 'INR',
+        value: totalValue,
+        items
+      });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send add to cart event:', error);
   }
   console.log('[GA4 Event] add_to_cart:', { currency: 'INR', value: totalValue, items });
 };
@@ -142,12 +170,16 @@ export const trackRemoveFromCart = (product: { id: number; title: string; price:
 
   const totalValue = product.price * quantity;
 
-  if (isGAActive()) {
-    ReactGA.event('remove_from_cart', {
-      currency: 'INR',
-      value: totalValue,
-      items
-    });
+  try {
+    if (isGAActive()) {
+      ReactGA.event('remove_from_cart', {
+        currency: 'INR',
+        value: totalValue,
+        items
+      });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send remove from cart event:', error);
   }
   console.log('[GA4 Event] remove_from_cart:', { currency: 'INR', value: totalValue, items });
 };
@@ -168,12 +200,16 @@ export const trackBeginCheckout = (
     quantity: item.quantity
   }));
 
-  if (isGAActive()) {
-    ReactGA.event('begin_checkout', {
-      currency: 'INR',
-      value: totalPrice,
-      items
-    });
+  try {
+    if (isGAActive()) {
+      ReactGA.event('begin_checkout', {
+        currency: 'INR',
+        value: totalPrice,
+        items
+      });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send begin checkout event:', error);
   }
   console.log('[GA4 Event] begin_checkout:', { currency: 'INR', value: totalPrice, items });
 };
@@ -196,13 +232,17 @@ export const trackPurchase = (
     quantity: item.quantity
   }));
 
-  if (isGAActive()) {
-    ReactGA.event('purchase', {
-      transaction_id: transactionId,
-      currency: 'INR',
-      value: totalPrice,
-      items
-    });
+  try {
+    if (isGAActive()) {
+      ReactGA.event('purchase', {
+        transaction_id: transactionId,
+        currency: 'INR',
+        value: totalPrice,
+        items
+      });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to send purchase event:', error);
   }
   console.log('[GA4 Event] purchase:', { transaction_id: transactionId, currency: 'INR', value: totalPrice, items });
 };

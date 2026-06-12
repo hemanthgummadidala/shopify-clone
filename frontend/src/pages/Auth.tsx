@@ -54,7 +54,7 @@ export const Auth: React.FC = () => {
         {/* Tabs */}
         <div className="flex border-b border-gray-100 mt-6">
           <button
-            onClick={() => { setIsLogin(true); setError(''); }}
+            onClick={() => { setIsLogin(true); setEmail(''); setPassword(''); setName(''); setError(''); }}
             className={`w-1/2 pb-3 text-sm font-semibold border-b-2 text-center transition-all ${
               isLogin ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}
@@ -62,7 +62,7 @@ export const Auth: React.FC = () => {
             Sign In
           </button>
           <button
-            onClick={() => { setIsLogin(false); setError(''); }}
+            onClick={() => { setIsLogin(false); setEmail(''); setPassword(''); setName(''); setError(''); }}
             className={`w-1/2 pb-3 text-sm font-semibold border-b-2 text-center transition-all ${
               !isLogin ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
             }`}
@@ -93,6 +93,7 @@ export const Auth: React.FC = () => {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    autoComplete="name"
                     className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                     placeholder="John Doe"
                   />
@@ -111,6 +112,7 @@ export const Auth: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                   placeholder="name@example.com"
                 />
@@ -128,6 +130,7 @@ export const Auth: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                   placeholder="••••••••"
                 />

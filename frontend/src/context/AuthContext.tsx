@@ -13,7 +13,17 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+const getApiBase = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    // Replace localhost/127.0.0.1 with the current hostname so other devices on the network can connect
+    return envUrl.replace('localhost', window.location.hostname).replace('127.0.0.1', window.location.hostname);
+  }
+  return envUrl;
+};
+
+export const API_BASE = getApiBase();
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -84,7 +94,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        throw new Error('Server returned an invalid response. Please check your fields and try again.');
+      }
+
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
@@ -109,7 +125,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ name, email, password }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        throw new Error('Server returned an invalid response. Please check your fields and try again.');
+      }
+
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');
       }
