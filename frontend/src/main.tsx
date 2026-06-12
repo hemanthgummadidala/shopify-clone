@@ -9,17 +9,18 @@ if (typeof window !== 'undefined') {
   window.fetch = function (input, init) {
     const url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
     if (url.includes('.loca.lt')) {
-      const headers = new Headers(init?.headers || {});
+      const newInit = { ...init };
+      newInit.credentials = 'include'; // Send bypass cookies with cross-origin requests
+      
+      const headers = new Headers(newInit.headers || {});
       headers.set('bypass-tunnel-reminder', 'true');
+      newInit.headers = headers;
       
       if (input instanceof Request) {
-        return originalFetch(new Request(input, { headers }), init);
+        return originalFetch(new Request(input, newInit), init);
       }
       
-      return originalFetch(input, {
-        ...init,
-        headers
-      });
+      return originalFetch(input, newInit);
     }
     return originalFetch(input, init);
   };
