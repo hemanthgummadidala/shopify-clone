@@ -11,15 +11,14 @@ const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:post
 
 const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
 
-export const pool = new Pool({
-  connectionString,
-  ssl: isLocalhost ? false : { rejectUnauthorized: false },
-  // If connectionString is empty, use individual env vars
-  user: process.env.PGUSER || 'postgres',
-  password: process.env.PGPASSWORD || 'postgres',
-  host: process.env.PGHOST || 'localhost',
-  port: parseInt(process.env.PGPORT || '5433'),
-  database: process.env.PGDATABASE || 'shopify_clone',
+export //  WHAT TO PASTE INSTEAD:
+  const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // Seed products data
