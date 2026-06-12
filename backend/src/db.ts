@@ -12,17 +12,9 @@ export const pool = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-// Seed products data
-const mockProducts = [
-  // Leave your actual product items below here if they were part of your original file!
-];
 
 // Seed products data
-const mockProducts = [
-  // ... your product objects can stay right below here if they were part of the original file
-];
-// Seed products data
-const mockProducts = [
+export const mockProducts: any[] = [
   {
     title: 'Sleek Leather Backpack',
     description: 'A premium, water-resistant leather backpack with a dedicated laptop compartment and multiple accessory pockets. Perfect for daily commutes and business travel.',
