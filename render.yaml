@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: shopify-clone-backend
+    runtime: node
+    region: ohio
+    plan: free
+    branch: temp-deploy-branch-clean
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    rootDir: backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        value: postgresql://postgres:postgres@localhost:5433/shopify_clone
+        scope: pr
+      - key: JWT_SECRET
+        value: super_secret_shopify_key
+        scope: pr
