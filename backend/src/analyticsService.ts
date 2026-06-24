@@ -39,11 +39,8 @@ async function fetchSessionLogs(sessionId: string): Promise<TrackingLog[]> {
     const result = await pool.query(trackingQuery, [sessionId]);
     return result.rows || [];
   } catch (error: any) {
-    if (error?.code === '42P01') {
-      // tracking_logs table missing - fall back to action_history if sessionId looks like a user mapping.
-      return [];
-    }
-    throw error;
+    console.warn('Analytics DB query failed, returning empty event list:', error?.message || error);
+    return [];
   }
 }
 /**
