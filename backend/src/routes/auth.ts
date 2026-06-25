@@ -3,16 +3,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { BigQuery } from '@google-cloud/bigquery';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_shopify_key';
-
-// 🔐 Initialize BigQuery client pointing directly to your credentials
-const bqClient = new BigQuery({
-  keyFilename: 'gcp-service-account-key.json',
-  projectId: 'shopify-clone-499604'
-});
 
 // POST /register
 router.post('/register', async (req, res) => {
@@ -65,47 +58,13 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '24h' });
 
-    // 📡 DYNAMIC RETENTION TRACKING: Fetch past interactions from BigQuery
-    let showPopup = false;
-    let abandonedProduct = null;
-
-    try {
-      const bqQuery = `
-        SELECT 
-          event_name,
-          (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_title') as item_name
-        FROM \`shopify-clone-499604.analytics_541293436.events_20260616\`
-        WHERE user_id = @email OR (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'user_email') = @email
-        ORDER BY event_timestamp DESC
-        LIMIT 10
-      `;
-
-      const [rows] = await bqClient.query({
-        query: bqQuery,
-        params: { email: email.toLowerCase() }
-      });
-
-      const completedPurchase = rows.some(r => r.event_name === 'purchase');
-      if (!completedPurchase && rows.length > 0) {
-        const lastView = rows.find(r => r.event_name === 'view_item' || r.event_name === 'add_to_cart');
-        if (lastView && lastView.item_name) {
-          showPopup = true;
-          abandonedProduct = lastView.item_name;
-        }
-      }
-    } catch (bqErr) {
-      console.error("BigQuery query failed:", bqErr);
-    }
-
     return res.json({
       message: 'Login successful',
       token,
       user: {
         id: user.id,
         name: user.name,
-        email: user.email,
-        showPopup,
-        abandonedProduct
+        email: user.email
       }
     });
 
