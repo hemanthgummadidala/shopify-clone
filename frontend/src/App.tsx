@@ -50,19 +50,16 @@ const AppContent: React.FC = () => {
       localStorage.setItem('user_pseudo_id', userPseudoId);
     }
 
-    // 2. Dispatch profile context lookup to the correct matching server route handler
-   // 2. Dispatch profile context lookup to the correct matching server route handler
-   // Update the path to include /tracking/ right after /analytics
-fetch(`https://shopify-clone-backend-8awt.onrender.com/api/analytics/tracking/user-popup-intent/${userPseudoId}`)
-   .then((res) => res.json())
-   .then((data) => {
-     if (data.success && data.popup && data.popup.shouldShow) {
-       setPopupData(data.popup);
-     }
-   })
-   .catch((err) => console.error('Landing user intent profile synchronization failure:', err));
+    // 2. Dispatch profile context lookup to the correct matching server route handler with unique namespace tracking route path
+    fetch(`https://shopify-clone-backend-8awt.onrender.com/api/analytics/tracking/user-popup-intent/${userPseudoId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.popup && data.popup.shouldShow) {
+          setPopupData(data.popup);
+        }
+      })
+      .catch((err) => console.error('Landing user intent profile synchronization failure:', err));
   }, []);
-    
   useEffect(() => {
     const pathname = path.split('?')[0];
     if (!loading) {
