@@ -63,9 +63,9 @@ router.post('/analyze/ai', async (req: Request, res: Response) => {
 });
 
 // NEW ENDPOINT: Triggered on user landing to check BigQuery history and pass back popup instructions
-router.get('/user-popup-intent/:userPseudoId', async (req: Request, res: Response) => {
+router.get('/user-popup-intent/:userId', async (req: Request, res: Response) => {
   try {
-    const { userPseudoId } = req.params;
+    const userPseudoId = req.params.userId;
     if (!userPseudoId) {
       return res.status(400).json({ success: false, error: 'User ID tracking parameter missing.' });
     }
