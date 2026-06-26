@@ -51,7 +51,7 @@ const AppContent: React.FC = () => {
     }
 
     // 2. Dispatch profile context lookup to the correct matching server route handler
-    fetch(`http://localhost:5000/api/analytics/user-popup-intent/${userPseudoId}`)
+    fetch(`https://shopify-clone-backend-analytics.onrender.com/api/analytics/user-popup-intent/${userPseudoId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.popup.shouldShow) {
