@@ -23,8 +23,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/analytics', trackingRoutes);
-app.use('/api/analytics', scoringEngineRoutes);
+// Change these two lines to separate their paths:
+app.use('/api/analytics/tracking', trackingRoutes);
+app.use('/api/analytics/scores', scoringEngineRoutes);
 
 // Base API Health Check Endpoint
 app.get('/', (req, res) => {
