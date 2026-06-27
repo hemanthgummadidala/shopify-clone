@@ -133,7 +133,7 @@ const userIdToUserPseudoId: Record<string, string> = {
 router.get('/user-popup-intent/:userId', async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
-    const userPseudoId = userIdToUserPseudoId[userId];
+    const userPseudoId = userIdToUserPseudoId[userId.toString()];
     if (!userPseudoId) {
       return res.status(400).json({ success: false, error: 'User ID tracking parameter missing.' });
     }
