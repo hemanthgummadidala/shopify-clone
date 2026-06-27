@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext.js';
+import { AuthProvider, useAuth, API_BASE, getUserPseudoId } from './context/AuthContext.js';
 import { CartProvider } from './context/CartContext.js';
 import { RouterProvider, Route, useRouter } from './components/Router.js';
 import { Header } from './components/Header.js';
@@ -36,30 +36,27 @@ const Footer: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, pendingPopupCheck, clearPendingPopupCheck } = useAuth();
   const { path, navigate } = useRouter();
 
   // State to hold user intent popup configuration map
   const [popupData, setPopupData] = useState({ shouldShow: false, title: '', message: '', couponCode: '' });
 
   useEffect(() => {
-    // 1. Resolve browser persistent identification identity
-    let userPseudoId = localStorage.getItem('user_pseudo_id');
-    if (!userPseudoId) {
-      userPseudoId = 'usr_' + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('user_pseudo_id', userPseudoId);
-    }
+    if (loading || !user || !pendingPopupCheck) return;
 
-    // 2. Dispatch profile context lookup to the correct matching server route handler with unique namespace tracking route path
-    fetch(`https://shopify-clone-backend-8awt.onrender.com/api/tracking/user-popup-intent/${userPseudoId}`)
+    const userPseudoId = getUserPseudoId(user.id);
+
+    fetch(`${API_BASE}/tracking/user-popup-intent/${userPseudoId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.popup && data.popup.shouldShow) {
           setPopupData(data.popup);
         }
       })
-      .catch((err) => console.error('Landing user intent profile synchronization failure:', err));
-  }, []);
+      .catch((err) => console.error('Landing user intent profile synchronization failure:', err))
+      .finally(() => clearPendingPopupCheck());
+  }, [user, loading, pendingPopupCheck, clearPendingPopupCheck]);
   useEffect(() => {
     const pathname = path.split('?')[0];
     if (!loading) {

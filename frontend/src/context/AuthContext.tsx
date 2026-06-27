@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User } from '../types.js';
-import { trackLogin, trackSignUp } from '../services/analytics.js';
+import { trackLogin, trackSignUp, setAnalyticsUserId } from '../services/analytics.js';
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  pendingPopupCheck: boolean;
+  clearPendingPopupCheck: () => void;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -28,10 +30,27 @@ const getApiBase = () => {
 
 export const API_BASE = getApiBase();
 
+const USER_PSEUDO_ID_KEY = 'user_pseudo_id';
+
+export const getUserPseudoId = (userId: number) => `usr_${userId}`;
+
+export const syncUserPseudoId = (userId: number) => {
+  const pseudoId = getUserPseudoId(userId);
+  localStorage.setItem(USER_PSEUDO_ID_KEY, pseudoId);
+  return pseudoId;
+};
+
+export const clearUserPseudoId = () => {
+  localStorage.removeItem(USER_PSEUDO_ID_KEY);
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('shopify_token'));
   const [loading, setLoading] = useState<boolean>(true);
+  const [pendingPopupCheck, setPendingPopupCheck] = useState<boolean>(false);
+
+  const clearPendingPopupCheck = useCallback(() => setPendingPopupCheck(false), []);
 
   // Custom fetch that automatically appends bearer token
   const apiFetch = async (url: string, options: RequestInit = {}) => {
@@ -72,6 +91,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           if (res.ok) {
             const userData = await res.json();
+            syncUserPseudoId(userData.id);
+            setAnalyticsUserId(userData.id);
             setToken(storedToken);
             setUser(userData);
           } else {
@@ -109,8 +130,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       localStorage.setItem('shopify_token', data.token);
+      syncUserPseudoId(data.user.id);
+      setAnalyticsUserId(data.user.id);
       setToken(data.token);
       setUser(data.user);
+      setPendingPopupCheck(true);
       trackLogin('email');
       setLoading(false);
     } catch (error) {
@@ -140,8 +164,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       localStorage.setItem('shopify_token', data.token);
+      syncUserPseudoId(data.user.id);
+      setAnalyticsUserId(data.user.id);
       setToken(data.token);
       setUser(data.user);
+      setPendingPopupCheck(true);
       trackSignUp('email');
       setLoading(false);
     } catch (error) {
@@ -152,12 +179,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('shopify_token');
+    clearUserPseudoId();
     setToken(null);
     setUser(null);
+    setPendingPopupCheck(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, apiFetch }}>
+    <AuthContext.Provider value={{ user, token, loading, pendingPopupCheck, clearPendingPopupCheck, login, register, logout, apiFetch }}>
       {children}
     </AuthContext.Provider>
   );

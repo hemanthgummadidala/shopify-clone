@@ -195,34 +195,45 @@ export async function analyzeUserSessionWithAI(sessionId: string): Promise<Sessi
   return analyzeUserSession(sessionId);
 }
 /**
- * Fetches ALL historical sessions and event data for a unique user from BigQuery
- * This fulfills Sai Anna's requirement to aggregate at the user level.
+ * Fetches historical GA4 events for a user from BigQuery.
+ * App IDs (usr_4) are matched via GA4 user_id; raw GA4 pseudo IDs match user_pseudo_id directly.
  */
 export async function getIntentScoreForUser(userPseudoId: string): Promise<any> {
-  const { bigquery } = require('./bigqueryClient.js');
+  const appUserMatch = /^usr_(\d+)$/.exec(userPseudoId);
+  const appUserId = appUserMatch?.[1] ?? null;
 
-  // SQL Query to pull historical events for the user
   const query = `
-    SELECT 
-      user_pseudo_id, 
-      ga_session_id, 
-      event_name, 
-      TIMESTAMP_MICROS(event_timestamp) as event_time
-    FROM \`shopify-clone-499604.analytics_541293436.events_20260616\`
-    WHERE user_pseudo_id = @userPseudoId
+    SELECT
+      user_pseudo_id,
+      user_id,
+      event_name,
+      TIMESTAMP_MICROS(event_timestamp) AS event_time
+    FROM ${eventsTableRef()}
+    WHERE _TABLE_SUFFIX = @dateSuffix
+      AND (
+        user_pseudo_id = @userPseudoId
+        ${appUserId ? 'OR user_id = @appUserId' : ''}
+      )
     ORDER BY event_timestamp ASC
   `;
 
-  const options = {
-    query: query,
-    params: { userPseudoId },
+  const params: Record<string, string> = {
+    dateSuffix: BQ_DATE_SUFFIX,
+    userPseudoId,
   };
+  if (appUserId) {
+    params.appUserId = appUserId;
+  }
 
   try {
-    const [rows] = await bigquery.query(options);
+    const [rows] = await bigquery.query({
+      query,
+      params,
+      location: 'US',
+    });
     return { success: true, totalEvents: rows.length, rawData: rows };
   } catch (error: any) {
-    console.error("BigQuery Extraction Failure: ", error);
+    console.error('BigQuery Extraction Failure: ', error);
     return { success: false, totalEvents: 0, rawData: [] };
   }
 }

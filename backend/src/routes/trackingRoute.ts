@@ -4,6 +4,65 @@ import { analyzeUserSession, analyzeUserSessionWithAI, getIntentScoreForUser } f
 
 const router = express.Router();
 
+type PopupConfig = {
+  shouldShow: boolean;
+  title: string;
+  message: string;
+  couponCode: string;
+};
+
+type UserEvent = { event_name: string };
+
+function parseAppUserId(userPseudoId: string): number | null {
+  const match = /^usr_(\d+)$/.exec(userPseudoId);
+  return match ? Number(match[1]) : null;
+}
+
+async function getPostgresActionEvents(userId: number): Promise<UserEvent[]> {
+  const result = await pool.query(
+    'SELECT action_history FROM users WHERE id = $1',
+    [userId]
+  );
+  const actions: string[] = result.rows[0]?.action_history ?? [];
+  return actions.map((event_name) => ({ event_name }));
+}
+
+function buildPopupConfig(events: UserEvent[]): PopupConfig {
+  const popupConfig: PopupConfig = {
+    shouldShow: false,
+    title: '',
+    message: '',
+    couponCode: '',
+  };
+
+  if (events.length === 0) {
+    return popupConfig;
+  }
+
+  const hasCartAdded = events.some((e) => e.event_name === 'add_to_cart');
+  const hasPurchased = events.some((e) => e.event_name === 'purchase');
+
+  if (hasCartAdded && !hasPurchased) {
+    return {
+      shouldShow: true,
+      title: 'We Saved Your Cart',
+      message: 'Items from your last visit are still waiting. Complete checkout right now to unlock an extra 15% discount!',
+      couponCode: 'RETURN15',
+    };
+  }
+
+  if (events.length > 12) {
+    return {
+      shouldShow: true,
+      title: 'Special Member Reward',
+      message: 'Welcome back! Thanks for being an active customer. Take 10% off any premium apparel item today.',
+      couponCode: 'STYLE10',
+    };
+  }
+
+  return popupConfig;
+}
+
 router.post('/track-action', async (req: Request, res: Response) => {
   try {
     const { userId, actionName } = req.body;
@@ -70,37 +129,17 @@ router.get('/user-popup-intent/:userId', async (req: Request, res: Response) => 
       return res.status(400).json({ success: false, error: 'User ID tracking parameter missing.' });
     }
 
-    // 1. Fetch user event data rows directly from Google BigQuery
+    // 1. Fetch events from BigQuery (GA4) and PostgreSQL (track-action history)
     const bigQueryData = await getIntentScoreForUser(userPseudoId);
+    let events: UserEvent[] = bigQueryData.success ? bigQueryData.rawData : [];
 
-    // Default configuration map: Hidden by default for users with no history
-    let popupConfig = { shouldShow: false, title: '', message: '', couponCode: '' };
-
-    if (bigQueryData.success && bigQueryData.totalEvents > 0) {
-      const events = bigQueryData.rawData;
-
-      const hasCartAdded = events.some((e: any) => e.event_name === 'add_to_cart');
-      const hasPurchased = events.some((e: any) => e.event_name === 'purchase');
-
-      // Rule Set A: Abandoned Cart Context
-      if (hasCartAdded && !hasPurchased) {
-        popupConfig = {
-          shouldShow: true,
-          title: 'We Saved Your Cart',
-          message: 'Items from your last visit are still waiting. Complete checkout right now to unlock an extra 15% discount!',
-          couponCode: 'RETURN15'
-        };
-      } 
-      // Rule Set B: High Engagement Window Shopper
-      else if (events.length > 12) {
-        popupConfig = {
-          shouldShow: true,
-          title: 'Special Member Reward',
-          message: 'Welcome back! Thanks for being an active customer. Take 10% off any premium apparel item today.',
-          couponCode: 'STYLE10'
-        };
-      }
+    const appUserId = parseAppUserId(userPseudoId);
+    if (appUserId) {
+      const postgresEvents = await getPostgresActionEvents(appUserId);
+      events = [...events, ...postgresEvents];
     }
+
+    const popupConfig = buildPopupConfig(events);
 
     return res.json({ success: true, popup: popupConfig });
   } catch (error: any) {

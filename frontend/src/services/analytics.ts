@@ -22,6 +22,18 @@ export const initGA = () => {
 // Helper check to see if GA is active
 const isGAActive = () => GA_ID && GA_ID !== 'G-XXXXXXXXXX';
 
+/** Links GA4 events in BigQuery to the authenticated app user id. */
+export const setAnalyticsUserId = (userId: number | string) => {
+  try {
+    if (isGAActive()) {
+      ReactGA.gtag('config', GA_ID, { user_id: String(userId) });
+    }
+  } catch (error) {
+    console.warn('[GA4 Tracking Error] Failed to set user_id:', error);
+  }
+  console.log(`[GA4] user_id set: ${userId}`);
+};
+
 /**
  * Tracks a page view event.
  * @param path The URL path and search query parameter string.
