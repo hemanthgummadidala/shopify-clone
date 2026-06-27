@@ -32,7 +32,7 @@ export const API_BASE = getApiBase();
 
 const USER_PSEUDO_ID_KEY = 'user_pseudo_id';
 
-export const getUserPseudoId = (userId: number) => `usr_${userId}`;
+export const getUserPseudoId = (userId: number) => `${userId}`;
 
 export const syncUserPseudoId = (userId: number) => {
   const pseudoId = getUserPseudoId(userId);

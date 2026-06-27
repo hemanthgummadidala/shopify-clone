@@ -121,10 +121,19 @@ router.post('/analyze/ai', async (req: Request, res: Response) => {
   }
 });
 
+
+const userIdToUserPseudoId: Record<string, string> = {
+  "1": "1015505499.1782367591",
+  "2": "199217271.1782480417",
+  "3": "1673580516.1782491913",
+  "4": "1077795746.1782479718",
+}
+
 // NEW ENDPOINT: Triggered on user landing to check BigQuery history and pass back popup instructions
 router.get('/user-popup-intent/:userId', async (req: Request, res: Response) => {
   try {
-    const userPseudoId = req.params.userId;
+    const userId = req.params.userId;
+    const userPseudoId = userIdToUserPseudoId[userId];
     if (!userPseudoId) {
       return res.status(400).json({ success: false, error: 'User ID tracking parameter missing.' });
     }
@@ -133,7 +142,7 @@ router.get('/user-popup-intent/:userId', async (req: Request, res: Response) => 
     const bigQueryData = await getIntentScoreForUser(userPseudoId);
     let events: UserEvent[] = bigQueryData.success ? bigQueryData.rawData : [];
 
-    const appUserId = parseAppUserId(userPseudoId);
+    const appUserId = parseAppUserId(userId);
     if (appUserId) {
       const postgresEvents = await getPostgresActionEvents(appUserId);
       events = [...events, ...postgresEvents];
