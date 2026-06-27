@@ -209,11 +209,7 @@ export async function getIntentScoreForUser(userPseudoId: string): Promise<any> 
       event_name,
       TIMESTAMP_MICROS(event_timestamp) AS event_time
     FROM ${eventsTableRef()}
-    WHERE _TABLE_SUFFIX = @dateSuffix
-      AND (
-        user_pseudo_id = @userPseudoId
-        ${appUserId ? 'OR user_id = @appUserId' : ''}
-      )
+    WHERE user_pseudo_id = @userPseudoId
     ORDER BY event_timestamp ASC
   `;
 
@@ -229,7 +225,6 @@ export async function getIntentScoreForUser(userPseudoId: string): Promise<any> 
     const [rows] = await bigquery.query({
       query,
       params,
-      location: 'US',
     });
     return { success: true, totalEvents: rows.length, rawData: rows };
   } catch (error: any) {
